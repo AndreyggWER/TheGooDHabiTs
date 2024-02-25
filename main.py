@@ -26,21 +26,17 @@ fake_habits = [
 
 
 @app.get("/users", tags=["Users"])
+@app.get("/users", tags=["Users"])
 def get_users(user_id: int = None, limit: int = 10, offset: int = 0):
-    if user_id is not None:
-        return [user for user in fake_users if user.get("id") == user_id]
-    if user_id is None:
-        return fake_users[offset:][:limit]
+    return [user for user in fake_users if (user.get("id") == user_id if user_id else True)][offset:][:limit]
 
 
 @app.post("/users", tags=["Users"])
 def change_users_data(user_id: int, new_name: str = None, new_age: int = None):
     current_user = next((user for user in fake_users if user["id"] == user_id), None)
     if current_user:
-        if new_name is not None:
-            current_user["name"] = new_name
-        if new_age is not None:
-            current_user["age"] = new_age
+        current_user["name"] = new_name if new_name is not None else current_user["name"]
+        current_user["age"] = new_age if new_age is not None else current_user["age"]
         return {"status": 200, "data": current_user}
     return {"status": 404, "message": f"User with id {user_id} not found"}
 
@@ -56,9 +52,8 @@ def remove_users(user_id: int):
 
 @app.get("/category", tags=["Categories"])
 def get_categories(category_id: int = None, limit: int = 10, offset: int = 0):
-    if category_id is not None:
-        return [category for category in fake_categories if category["id"] == category_id]
-    return fake_categories[offset:offset+limit]
+    return [category for category in fake_categories if (category["id"] == category_id
+                                                         if category_id else True)][offset:offset + limit]
 
 
 @app.post("/category", tags=["Categories"])
@@ -66,14 +61,13 @@ def add_or_change_categories(category_id: int, command: str = "add", name_habit:
     if command == "add":
         fake_categories.append({"id": category_id, "name_habit": name_habit, "emoji": emoji})
         return {"status": 200, "data": [category for category in fake_categories if category["id"] == category_id]}
-    elif command == "change":
-        current_category = next((category for category in fake_categories if category["id"] == category_id), None)
-        if current_category:
-            current_category["name_habit"] = name_habit
-            current_category["emoji"] = emoji
-            return {"status": 200, "data": current_category}
-        return {"status": 404, "message": f"Category with id {category_id} not found"}
-    return {"status": 400, "message": f"Invalid command: {command}"}
+    current_category = next((category for category in fake_categories if category["id"] == category_id), None)
+    if current_category:
+        current_category["name_habit"] = name_habit
+        current_category["emoji"] = emoji
+        return {"status": 200, "data": current_category}
+    return {"status": 404, "message": f"Category with id {category_id} not found"
+            if command == "change" else f"Invalid command: {command}"}
 
 
 @app.delete("/category", tags=["Categories"])
@@ -89,7 +83,7 @@ def remove_categories(category_id: int):
 def get_habits(user_id: int = None, limit: int = 10, offset: int = 0, category_id: int = None):
     filtered_habits = [habit for habit in fake_habits if (habit["user_id"] == user_id if user_id else True) and
                        (habit["category_id"] == category_id if category_id else True)]
-    return filtered_habits[offset:offset+limit]
+    return filtered_habits[offset:offset + limit]
 
 
 @app.post("/habits", tags=["Habits"])
@@ -97,21 +91,21 @@ def habits_data(user_id: int, command: str = "add", new_user: int = "", new_cate
     if command == "add":
         fake_habits.append({"id": user_id, "user_id": new_user, "category_id": new_category, "name": new_name})
         return {"status": 200, "data": [habit for habit in fake_habits if habit["id"] == user_id]}
-    elif command == "change":
-        current_habit = next((habit for habit in fake_habits if habit["id"] == user_id), None)
-        if current_habit:
-            current_habit["name"] = new_name
-            current_habit["category_id"] = new_category
-            return {"status": 200, "data": current_habit}
-        return {"status": 404, "message": f"Habit with id {user_id} not found"}
-    return {"status": 400, "message": f"Invalid command: {command}"}
+    current_habit = next((habit for habit in fake_habits if habit["id"] == user_id), None)
+    if not current_habit:
+        return {"status": 404, "message": f"Habit with id {user_id} not found"} if command == "change" \
+            else {"status": 400, "message": f"Invalid command: {command}"}
+    if command == "change":
+        current_habit["name"] = new_name
+        current_habit["category_id"] = new_category
+        return {"status": 200, "data": current_habit}
 
 
 @app.delete("/habits", tags=["Habits"])
 def remove_habits(user_id: int):
     current_habit = next((habit for habit in fake_habits if habit["id"] == user_id), None)
-    if current_habit:
-        old_habit = [category for category in fake_categories if category.get("id") == user_id]
-        fake_habits.remove(current_habit)
-        return {"status": 200, "message": f"Category: {old_habit} was deleted"}
-    return {"status": 404, "message": f"Habit with id {user_id} not found"}
+    if not current_habit:
+        return {"status": 404, "message": f"Habit with id {user_id} not found"}
+    old_habit = [category for category in fake_categories if category.get("id") == user_id]
+    fake_habits.remove(current_habit)
+    return {"status": 200, "message": f"Category: {old_habit} was deleted"}
