@@ -92,13 +92,15 @@ def add_category(categories: List[Category]):
 
 @app.put("/categories", tags=["Categories"])
 def change_category(category: Category):
-    current_category = next((c for c in fake_categories if c.id == id), None)
+    current_category = next((c for c in fake_categories if c.id == category.id), None)
     if not current_category:
-        raise HTTPException(status_code=404, detail=f"User with id {current_category.id} not found")
+        raise HTTPException(status_code=404, detail=f"User with id {category.id} not found")
+    current_category.id = category.id
     current_category.name = category.name
-    current_category.age = category.age
     current_category.emoji = category.emoji
     return {"status": 200, "data": current_category}
+
+
 
 @app.delete("/categories", tags=["Categories"])
 def remove_category(id: int):
@@ -140,21 +142,20 @@ def add_habit(habits: List[Habit]):
 
 @app.put("/habits", tags=["Habits"])
 def change_habit(habit: Habit):
-    current_habit = next((h for h in fake_habits if h.id == id), None)
+    current_habit = next((h for h in fake_habits if h.id == habit.id), None)
     if not current_habit:
-        raise HTTPException(status_code=400, detail=f"Habit with id {current_habit.id} already exists")
+        raise HTTPException(status_code=404, detail=f"Habit with id {habit.id} not found")
     current_habit.id = habit.id
     current_habit.user_id = habit.user_id
     current_habit.category_id = habit.category_id
     current_habit.name = habit.name
     return {"status": 200, "data": current_habit}
 
-
 @app.delete("/habits", tags=["Habits"])
 def remove_habit(id: int):
     current_habit = next((habit for habit in fake_habits if habit.id == id), None)
     if not current_habit:
-        raise HTTPException(status_code=404, detail=f"Habit with id {current_habit.id} not found")
+        raise HTTPException(status_code=404, detail=f"Habit with id {id} not found")
     old_habit = [h for h in fake_habits if h.id == id]
     fake_habits.remove(current_habit)
     return {"status": 200, "message": f"Habit: {old_habit} was deleted"}
