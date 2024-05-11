@@ -22,3 +22,20 @@ users = Table(
     Column("registered_at", TIMESTAMP, default=datetime.utcnow),
     Column("role_id", Integer, ForeignKey("roles.id")),
 )
+
+categories = Table(
+    "categories",
+    metadata,
+    Column("id", Integer, primary_key=True),
+    Column("name", String, nullable=False),
+    Column("emoji", String, nullable=False),
+)
+
+habits = Table(
+    "habit",
+    metadata,
+    Column("id", Integer, primary_key=True),
+    Column("user_id", Integer, nullable=False),
+    Column("category_id", Integer, nullable=False),
+    Column("name", String, nullable=False),
+)
